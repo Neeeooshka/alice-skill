@@ -4,6 +4,8 @@ import (
 	"flag"
 	"net/http"
 
+	"github.com/Neeeooshka/alice-skill.git/internal/app"
+
 	"github.com/Neeeooshka/alice-skill.git/internal/config"
 	"github.com/Neeeooshka/alice-skill.git/internal/storage"
 	file "github.com/Neeeooshka/alice-skill.git/internal/storage/file"
@@ -36,7 +38,7 @@ func main() {
 	}
 	defer store.Close()
 
-	appInstance := newAppInstance(opt, store)
+	appInstance := app.NewShortenerAppInstance(opt, store)
 
 	// create router
 	router := chi.NewRouter()
@@ -45,9 +47,10 @@ func main() {
 	router.Post("/api/shorten/batch", logger.IncludeLogger(compressor.IncludeCompressor(appInstance.APIBatchShortenerHandler, gzip.NewGzipCompressor()), zapLoger))
 	router.Get("/{id}", logger.IncludeLogger(appInstance.ExpanderHandler, zapLoger))
 	router.Get("/ping", logger.IncludeLogger(store.PingHandler, zapLoger))
+	router.Get("/api/user/urls", logger.IncludeLogger(appInstance.UserUrlsHandler, zapLoger))
 
 	// create HTTP Server
-	http.ListenAndServe(appInstance.options.GetServer(), router)
+	http.ListenAndServe(appInstance.Options.GetServer(), router)
 }
 
 // init options
